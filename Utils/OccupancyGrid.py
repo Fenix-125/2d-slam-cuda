@@ -31,6 +31,7 @@ class OccupancyGrid:
         # theta= 0 is x direction. spokes=0 is y direc tion, spokesStartIdx is the first ray of lidar scan direction. spokes increase counter-clockwise
         self.spokesStartIdx = int(((self.numSpokes / 2 - self.numSamplesPerRev) / 2) % self.numSpokes)
 
+    # INIT GRID
     def spokesGrid(self):
         # 0th ray is at south, then counter-clock wise increases. Theta 0 is at east.
         numHalfElem = int(self.lidarMaxRange / self.unitGridSize)
@@ -48,6 +49,7 @@ class OccupancyGrid:
         rangeIdxGrid = np.sqrt(xGrid ** 2 + yGrid ** 2)
         return xGrid, yGrid, bearingIdxGrid, rangeIdxGrid
 
+    # todo: EXPLAIN
     def itemizeSpokesGrid(self, xGrid, yGrid, bearingIdxGrid, rangeIdxGrid):
         # Due to discretization, later theta added could lead to up to 1 deg discretization error
         radByX = []
@@ -60,6 +62,7 @@ class OccupancyGrid:
             radByR.append(rangeIdxGrid[idx[:, 0], idx[:, 1]])
         return radByX, radByY, radByR
 
+    # EXPAND THE MAP IN TO NEEDED DIRECTION
     def expandOccupancyGridHelper(self, position, axis):
         gridShape = self.occupancyGridVisited.shape
         if axis == 0:
@@ -94,6 +97,7 @@ class OccupancyGrid:
         self.mapYLim[0] = self.OccupancyGridY[0, 0]
         self.mapYLim[1] = self.OccupancyGridY[-1, 0]
 
+    # DECODE THE NEEDED DIRECTION AND EXPAND GREED
     def expandOccupancyGrid(self, expandDirection):
         gridShape = self.occupancyGridVisited.shape
         if expandDirection == 1:
@@ -105,12 +109,14 @@ class OccupancyGrid:
         else:
             self.expandOccupancyGridHelper(gridShape[0], 0)
 
+    # GET FRO X Y COORDINATES X Y INDEXES
     def convertRealXYToMapIdx(self, x, y):
         # mapXLim is (2,) array for left and right limit, same for mapYLim
         xIdx = (np.rint((x - self.mapXLim[0]) / self.unitGridSize)).astype(int)
         yIdx = (np.rint((y - self.mapYLim[0]) / self.unitGridSize)).astype(int)
         return xIdx, yIdx
 
+    # CHACK IF EXPANSION OF THE MAP IS NEEDED
     def checkMapToExpand(self, x, y):
         if any(x < self.mapXLim[0]):
             return 1
@@ -123,13 +129,15 @@ class OccupancyGrid:
         else:
             return -1
 
+    # EXPAND THE MAP IF NEEDED
     def checkAndExapndOG(self, x, y):
         """check x, y (vector points) are inside OG. If not, expand OG."""
         expandDirection = self.checkMapToExpand(x, y)
-        while (expandDirection != -1):
+        while expandDirection != -1:
             self.expandOccupancyGrid(expandDirection)
             expandDirection = self.checkMapToExpand(x, y)
 
+    # UPDATE THE MAP DUE TO ODOMETERY
     def updateOccupancyGrid(self, reading, dTheta=0, update=True):
         x, y, theta, rMeasure = reading['x'], reading['y'], reading['theta'], reading['range']
         theta += dTheta
@@ -206,10 +214,10 @@ def main():
     plt.figure(figsize=(19.20, 19.20))
     xTrajectory, yTrajectory = [], []
     colors = iter(cm.rainbow(np.linspace(1, 0, len(sensorData) + 1)))
-    for key in sorted(sensorData.keys()):
+    for time in sorted(sensorData.keys()):
         count += 1
-        og.updateOccupancyGrid(sensorData[key])
-        updateTrajectoryPlot(sensorData[key], xTrajectory, yTrajectory, colors, count)
+        og.updateOccupancyGrid(sensorData[time])
+        updateTrajectoryPlot(sensorData[time], xTrajectory, yTrajectory, colors, count)
         # if count == 100:
         #   break
 

@@ -27,6 +27,7 @@ class ParticleFilter:
         for i in range(self.numParticles):
             self.particles[i].update(reading, count)
 
+    # if sum of variances is too big the weight are decided by Sum of all particle weights
     def weightUnbalanced(self):
         self.normalizeWeights()
         variance = 0
@@ -34,9 +35,10 @@ class ParticleFilter:
             variance += (self.particles[i].weight - 1 / self.numParticles) ** 2
             # variance += self.particles[i].weight**2
         print(variance)
-        if variance > ((self.numParticles - 1) / self.numParticles) ** 2 + (self.numParticles - 1.000000000000001) * (
-                1 / self.numParticles) ** 2:
-            # if variance > 2 / self.numParticles:
+        # if variance > ((self.numParticles - 1) / self.numParticles) ** 2 + (self.numParticles - 1.000000000000001) * (
+        #         1 / self.numParticles) ** 2:
+        # TODO: explain
+        if variance > (self.numParticles ** 2 - self.numParticles - .000000000000001) / (self.numParticles ** 2):
             return True
         else:
             return False
@@ -46,7 +48,7 @@ class ParticleFilter:
         for i in range(self.numParticles):
             weightSum += self.particles[i].weight
         for i in range(self.numParticles):
-            self.particles[i].weight = self.particles[i].weight / weightSum
+            self.particles[i].weight /= weightSum
 
     def resample(self):
         # for particle in self.particles:
@@ -65,14 +67,15 @@ class ParticleFilter:
 
 class Particle:
     def __init__(self, ogParameters, smParameters):
-        initMapXLength, initMapYLength, initXY, unitGridSize, lidarFOV, lidarMaxRange, numSamplesPerRev, wallThickness = ogParameters
+        initMapXLength, initMapYLength, initXY, unitGridSize, lidarFOV, lidarMaxRange, numSamplesPerRev, \
+        wallThickness = ogParameters
         scanMatchSearchRadius, scanMatchSearchHalfRad, scanSigmaInNumGrid, moveRSigma, maxMoveDeviation, \
         turnSigma, missMatchProbAtCoarse, coarseFactor = smParameters
-        og = OccupancyGrid(initMapXLength, initMapYLength, initXY, unitGridSize, lidarFOV, numSamplesPerRev,
-                           lidarMaxRange, wallThickness)
-        sm = ScanMatcher(og, scanMatchSearchRadius, scanMatchSearchHalfRad, scanSigmaInNumGrid, moveRSigma,
+        p_map = OccupancyGrid(initMapXLength, initMapYLength, initXY, unitGridSize, lidarFOV, numSamplesPerRev,
+                              lidarMaxRange, wallThickness)
+        sm = ScanMatcher(p_map, scanMatchSearchRadius, scanMatchSearchHalfRad, scanSigmaInNumGrid, moveRSigma,
                          maxMoveDeviation, turnSigma, missMatchProbAtCoarse, coarseFactor)
-        self.og = og
+        self.map = p_map
         self.sm = sm
         self.xTrajectory = []
         self.yTrajectory = []
@@ -139,7 +142,7 @@ class Particle:
             self.prevRawMovingTheta = rawMovingTheta
             self.prevMatchedMovingTheta = self.getMovingTheta(matchedReading)
         self.updateTrajectory(matchedReading)
-        self.og.updateOccupancyGrid(matchedReading)
+        self.map.updateOccupancyGrid(matchedReading)
         self.prevMatchedReading, self.prevRawReading = matchedReading, reading
         self.weight *= confidence
 
@@ -156,17 +159,17 @@ class Particle:
             plt.scatter(self.xTrajectory[i], self.yTrajectory[i], color=next(colors), s=35)
         plt.scatter(self.xTrajectory[-1], self.yTrajectory[-1], color=next(colors), s=500)
         plt.plot(self.xTrajectory, self.yTrajectory)
-        self.og.plotOccupancyGrid([-13, 20], [-25, 7], plotThreshold=False)
+        self.map.plotOccupancyGrid([-13, 20], [-25, 7], plotThreshold=False)
 
 
 def processSensorData(pf, sensorData, plotTrajectory=True):
     # gtData = readJson("../DataSet/PreprocessedData/intel_corrected_log") #########   For Debug Only  #############
     count = 0
     plt.figure(figsize=(19.20, 19.20))
-    for key in sorted(sensorData.keys()):
+    for time in sorted(sensorData.keys()):
         count += 1
         print(count)
-        pf.updateParticles(sensorData[key], count)
+        pf.updateParticles(sensorData[time], count)
         if pf.weightUnbalanced():
             pf.resample()
             print("resample")
@@ -180,8 +183,8 @@ def processSensorData(pf, sensorData, plotTrajectory=True):
                 plt.plot(particle.xTrajectory, particle.yTrajectory)
 
         xRange, yRange = [-13, 20], [-25, 7]
-        ogMap = bestParticle.og.occupancyGridVisited / bestParticle.og.occupancyGridTotal
-        xIdx, yIdx = bestParticle.og.convertRealXYToMapIdx(xRange, yRange)
+        ogMap = bestParticle.map.occupancyGridVisited / bestParticle.map.occupancyGridTotal
+        xIdx, yIdx = bestParticle.map.convertRealXYToMapIdx(xRange, yRange)
         ogMap = ogMap[yIdx[0]: yIdx[1], xIdx[0]: xIdx[1]]
         ogMap = np.flipud(1 - ogMap)
         plt.imshow(ogMap, cmap='gray', extent=[xRange[0], xRange[1], yRange[0], yRange[1]])
