@@ -185,7 +185,7 @@ def processSensorData(pf, sensorData, plotTrajectory=True):
         ogMap = ogMap[yIdx[0]: yIdx[1], xIdx[0]: xIdx[1]]
         ogMap = np.flipud(1 - ogMap)
         plt.imshow(ogMap, cmap='gray', extent=[xRange[0], xRange[1], yRange[0], yRange[1]])
-        plt.savefig('../Output/' + str(count).zfill(3) + '.png')
+        plt.savefig('Output/' + str(count).zfill(3) + '.png')
         plt.close()
 
         # if count == 100:
@@ -220,13 +220,29 @@ def main():
     maxMoveDeviation = 0.25
     turnSigma = 0.3
     missMatchProbAtCoarse = 0.15
-    coarseFactor = 5
+    coarseFactor = 5  # TODO: What is coarseFactor?
 
-    sensorData = readJson("../DataSet/PreprocessedData/intel_gfs")
-    numSamplesPerRev = len(sensorData[list(sensorData)[0]]['range'])  # Get how many points per revolution
+    sensorData = readJson("DataSet/PreprocessedData/intel_gfs")
+    # {
+    #     "976052890.244111": {
+    #         "range": [
+    #             1.09,
+    #             ...
+    #         ], # 180 components
+    #         "theta": -0.463373,
+    #         "x": 0.698,
+    #         "y": -0.015
+    #     },
+    #     ...
+    # }
+
+    # Get how many points per revolution; angel view discrete parts count
+    numSamplesPerView = len(sensorData[list(sensorData)[0]]['range'])
     initXY = sensorData[sorted(sensorData.keys())[0]]
     numParticles = 10
-    ogParameters = [initMapXLength, initMapYLength, initXY, unitGridSize, lidarFOV, lidarMaxRange, numSamplesPerRev,
+
+    #              [ map width    , map height   ,start_pos, map cell size, view angel, max dist view, angel parts count
+    ogParameters = [initMapXLength, initMapYLength, initXY, unitGridSize, lidarFOV, lidarMaxRange, numSamplesPerView,
                     wallThickness]
     smParameters = [scanMatchSearchRadius, scanMatchSearchHalfRad, scanSigmaInNumGrid, moveRSigma, maxMoveDeviation,
                     turnSigma,
