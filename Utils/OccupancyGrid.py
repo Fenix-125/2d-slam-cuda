@@ -3,8 +3,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
+
 class OccupancyGrid:
-    def __init__(self, mapXLength, mapYLength, initXY, unitGridSize, lidarFOV, numSamplesPerRev, lidarMaxRange, wallThickness):
+    def __init__(self, mapXLength, mapYLength, initXY, unitGridSize, lidarFOV, numSamplesPerRev, lidarMaxRange,
+                 wallThickness):
         xNum = int(mapXLength / unitGridSize)
         yNum = int(mapYLength / unitGridSize)
         x = np.linspace(-xNum * unitGridSize / 2, xNum * unitGridSize / 2, num=xNum + 1) + initXY['x']
@@ -38,10 +40,12 @@ class OccupancyGrid:
         xGrid, yGrid = np.meshgrid(x, y)
         bearingIdxGrid[:, numHalfElem + 1: 2 * numHalfElem + 1] = np.rint((np.pi / 2 + np.arctan(
             yGrid[:, numHalfElem + 1: 2 * numHalfElem + 1] / xGrid[:, numHalfElem + 1: 2 * numHalfElem + 1]))
-                / np.pi / 2 * self.numSpokes - 0.5).astype(int)
-        bearingIdxGrid[:, 0: numHalfElem] = np.fliplr(np.flipud(bearingIdxGrid))[:, 0: numHalfElem] + int(self.numSpokes / 2)
+                                                                          / np.pi / 2 * self.numSpokes - 0.5).astype(
+            int)
+        bearingIdxGrid[:, 0: numHalfElem] = np.fliplr(np.flipud(bearingIdxGrid))[:, 0: numHalfElem] + int(
+            self.numSpokes / 2)
         bearingIdxGrid[numHalfElem + 1: 2 * numHalfElem + 1, numHalfElem] = int(self.numSpokes / 2)
-        rangeIdxGrid = np.sqrt(xGrid**2 + yGrid**2)
+        rangeIdxGrid = np.sqrt(xGrid ** 2 + yGrid ** 2)
         return xGrid, yGrid, bearingIdxGrid, rangeIdxGrid
 
     def itemizeSpokesGrid(self, xGrid, yGrid, bearingIdxGrid, rangeIdxGrid):
@@ -59,14 +63,15 @@ class OccupancyGrid:
     def expandOccupancyGridHelper(self, position, axis):
         gridShape = self.occupancyGridVisited.shape
         if axis == 0:
-            insertion = np.ones((int(gridShape[0] / 5),  gridShape[1]))
+            insertion = np.ones((int(gridShape[0] / 5), gridShape[1]))
             if position == 0:
                 x = self.OccupancyGridX[0]
                 y = np.linspace(self.mapYLim[0] - int(gridShape[0] / 5) * self.unitGridSize, self.mapYLim[0],
                                 num=int(gridShape[0] / 5), endpoint=False)
             else:
                 x = self.OccupancyGridX[0]
-                y = np.linspace(self.mapYLim[1] + self.unitGridSize, self.mapYLim[1] + (int(gridShape[0] / 5) ) * self.unitGridSize,
+                y = np.linspace(self.mapYLim[1] + self.unitGridSize,
+                                self.mapYLim[1] + (int(gridShape[0] / 5)) * self.unitGridSize,
                                 num=int(gridShape[0] / 5), endpoint=False)
         else:
             insertion = np.ones((gridShape[0], int(gridShape[1] / 5)))
@@ -76,7 +81,8 @@ class OccupancyGrid:
                                 num=int(gridShape[1] / 5), endpoint=False)
             else:
                 y = self.OccupancyGridY[:, 0]
-                x = np.linspace(self.mapXLim[1] + self.unitGridSize, self.mapXLim[1] + (int(gridShape[1] / 5)) * self.unitGridSize,
+                x = np.linspace(self.mapXLim[1] + self.unitGridSize,
+                                self.mapXLim[1] + (int(gridShape[1] / 5)) * self.unitGridSize,
                                 num=int(gridShape[1] / 5), endpoint=False)
         self.occupancyGridVisited = np.insert(self.occupancyGridVisited, [position], insertion, axis=axis)
         self.occupancyGridTotal = np.insert(self.occupancyGridTotal, [position], 2 * insertion, axis=axis)
@@ -100,7 +106,7 @@ class OccupancyGrid:
             self.expandOccupancyGridHelper(gridShape[0], 0)
 
     def convertRealXYToMapIdx(self, x, y):
-        #mapXLim is (2,) array for left and right limit, same for mapYLim
+        # mapXLim is (2,) array for left and right limit, same for mapYLim
         xIdx = (np.rint((x - self.mapXLim[0]) / self.unitGridSize)).astype(int)
         yIdx = (np.rint((y - self.mapYLim[0]) / self.unitGridSize)).astype(int)
         return xIdx, yIdx
@@ -124,7 +130,7 @@ class OccupancyGrid:
             self.expandOccupancyGrid(expandDirection)
             expandDirection = self.checkMapToExpand(x, y)
 
-    def updateOccupancyGrid(self, reading, dTheta = 0, update=True):
+    def updateOccupancyGrid(self, reading, dTheta=0, update=True):
         x, y, theta, rMeasure = reading['x'], reading['y'], reading['theta'], reading['range']
         theta += dTheta
         rMeasure = np.asarray(rMeasure)
@@ -140,9 +146,11 @@ class OccupancyGrid:
             else:
                 emptyIdx = []
             occupiedIdx = np.argwhere(
-                (rAtSpokeDir > rMeasure[i] - self.wallThickness / 2) & (rAtSpokeDir < rMeasure[i] + self.wallThickness / 2))
+                (rAtSpokeDir > rMeasure[i] - self.wallThickness / 2) & (
+                        rAtSpokeDir < rMeasure[i] + self.wallThickness / 2))
             xEmptyIdx, yEmptyIdx = self.convertRealXYToMapIdx(x + xAtSpokeDir[emptyIdx], y + yAtSpokeDir[emptyIdx])
-            xOccupiedIdx, yOccupiedIdx = self.convertRealXYToMapIdx(x + xAtSpokeDir[occupiedIdx], y + yAtSpokeDir[occupiedIdx])
+            xOccupiedIdx, yOccupiedIdx = self.convertRealXYToMapIdx(x + xAtSpokeDir[occupiedIdx],
+                                                                    y + yAtSpokeDir[occupiedIdx])
             if update:
                 self.checkAndExapndOG(x + xAtSpokeDir[occupiedIdx], y + yAtSpokeDir[occupiedIdx])
                 if len(emptyIdx) != 0:
@@ -158,7 +166,7 @@ class OccupancyGrid:
         if not update:
             return np.asarray(emptyXList), np.asarray(emptyYList), np.asarray(occupiedXList), np.asarray(occupiedYList)
 
-    def plotOccupancyGrid(self, xRange = None, yRange= None, plotThreshold = True):
+    def plotOccupancyGrid(self, xRange=None, yRange=None, plotThreshold=True):
         if xRange is None or xRange[0] < self.mapXLim[0] or xRange[1] > self.mapXLim[1]:
             xRange = self.mapXLim
         if yRange is None or yRange[0] < self.mapYLim[0] or yRange[1] > self.mapYLim[1]:
@@ -174,6 +182,7 @@ class OccupancyGrid:
             plt.matshow(ogMap, cmap='gray', extent=[xRange[0], xRange[1], yRange[0], yRange[1]])
             plt.show()
 
+
 def updateTrajectoryPlot(matchedReading, xTrajectory, yTrajectory, colors, count):
     x, y, theta, range = matchedReading['x'], matchedReading['y'], matchedReading['theta'], matchedReading['range']
     xTrajectory.append(x)
@@ -181,8 +190,9 @@ def updateTrajectoryPlot(matchedReading, xTrajectory, yTrajectory, colors, count
     if count % 1 == 0:
         plt.scatter(x, y, color=next(colors), s=35)
 
+
 def main():
-    initMapXLength, initMapYLength, unitGridSize, lidarFOV, lidarMaxRange = 10, 10, 0.02, np.pi, 10 # in Meters
+    initMapXLength, initMapYLength, unitGridSize, lidarFOV, lidarMaxRange = 10, 10, 0.02, np.pi, 10  # in Meters
     wallThickness = 7 * unitGridSize
     jsonFile = "../DataSet/PreprocessedData/intel_gfs"
     with open(jsonFile, 'r') as f:
@@ -190,7 +200,8 @@ def main():
         sensorData = input['map']
     numSamplesPerRev = len(sensorData[list(sensorData)[0]]['range'])  # Get how many points per revolution
     initXY = sensorData[sorted(sensorData.keys())[0]]
-    og = OccupancyGrid(initMapXLength, initMapYLength, initXY, unitGridSize, lidarFOV, numSamplesPerRev, lidarMaxRange, wallThickness)
+    og = OccupancyGrid(initMapXLength, initMapYLength, initXY, unitGridSize, lidarFOV, numSamplesPerRev, lidarMaxRange,
+                       wallThickness)
     count = 0
     plt.figure(figsize=(19.20, 19.20))
     xTrajectory, yTrajectory = [], []
@@ -199,14 +210,15 @@ def main():
         count += 1
         og.updateOccupancyGrid(sensorData[key])
         updateTrajectoryPlot(sensorData[key], xTrajectory, yTrajectory, colors, count)
-        #if count == 100:
+        # if count == 100:
         #   break
 
     plt.scatter(xTrajectory[0], yTrajectory[0], color='r', s=500)
     plt.scatter(xTrajectory[-1], yTrajectory[-1], color=next(colors), s=500)
     plt.plot(xTrajectory, yTrajectory)
-    #og.plotOccupancyGrid([-12, 20], [-23.5, 7])
-    #og.plotOccupancyGrid(xRange =[-11.9, 20], yRange =[-23.5, 6.    og.plotOccupancyGrid()
+    # og.plotOccupancyGrid([-12, 20], [-23.5, 7])
+    # og.plotOccupancyGrid(xRange =[-11.9, 20], yRange =[-23.5, 6.    og.plotOccupancyGrid()
+
 
 if __name__ == '__main__':
     main()

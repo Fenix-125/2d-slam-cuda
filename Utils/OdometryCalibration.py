@@ -6,6 +6,7 @@ from Utils.OccupancyGrid import OccupancyGrid
 from scipy.ndimage import gaussian_filter
 import math
 
+
 def plotMove(rawMinusGtMoveList, rawMoveList, gtMoveList):
     EstGtMoveArray = np.asarray(rawMinusGtMoveList)
     EstMoveSortedIdx = np.argsort(rawMoveList)
@@ -23,16 +24,16 @@ def plotMove(rawMinusGtMoveList, rawMoveList, gtMoveList):
     plt.ylabel("m")
     plt.show()
 
+
 def plotTheta(errorTheta1List, rawMoveList):
     rawMoveSortedIdx = np.argsort(rawMoveList)
     rawMoveSortedArray = np.sort(rawMoveList)
     errorTheta1Array = np.asarray(errorTheta1List)
     errorSortedTheta1Array = errorTheta1Array[rawMoveSortedIdx]
-    plt.scatter(rawMoveSortedArray, errorSortedTheta1Array, s = 1)
+    plt.scatter(rawMoveSortedArray, errorSortedTheta1Array, s=1)
     plt.xlabel("m")
     plt.ylabel("deg")
     plt.show()
-
 
 
 def main():
@@ -58,9 +59,11 @@ def main():
             continue
         reading = sensorData[key]
         gtReading = gtData[key]
-        prevRawX, prevRawY, prevRawTheta, prevRawRMeasure = prevReading['x'], prevReading['y'], prevReading['theta'], prevReading[
-            'range']
-        prevGtX, prevGtY, prevGtTheta, prevGtMeasure = prevGtReading['x'], prevGtReading['y'], prevGtReading['theta'], prevGtReading['range']
+        prevRawX, prevRawY, prevRawTheta, prevRawRMeasure = prevReading['x'], prevReading['y'], prevReading['theta'], \
+                                                            prevReading[
+                                                                'range']
+        prevGtX, prevGtY, prevGtTheta, prevGtMeasure = prevGtReading['x'], prevGtReading['y'], prevGtReading['theta'], \
+                                                       prevGtReading['range']
         rawX, rawY, rawTheta, rMeasure = reading['x'], reading['y'], reading['theta'], reading['range']
         gtX, gtY, gtTheta, gtMeasure = gtReading['x'], gtReading['y'], gtReading['theta'], gtReading['range']
 
@@ -94,9 +97,9 @@ def main():
 
                 errorTheta1 = rawTheta1 - gtTheta1
                 if errorTheta1 > np.pi:
-                   errorTheta1 = errorTheta1 - np.pi * 2
+                    errorTheta1 = errorTheta1 - np.pi * 2
                 elif errorTheta1 < - np.pi:
-                   errorTheta1 = errorTheta1 + np.pi * 2
+                    errorTheta1 = errorTheta1 + np.pi * 2
 
                 prevRawThetaM = rawThetaM
                 prevGtThetaM = gtThetaM
@@ -119,7 +122,6 @@ def main():
             errorTheta1 = None
             rawTheta1 = None
 
-
         # theta 2
         rawTheta2 = rawTheta - prevRawTheta
         gtTheta2 = gtTheta - prevGtTheta
@@ -130,9 +132,7 @@ def main():
             errorTheta2 = errorTheta2 + np.pi * 2
 
         # use theta2 as moving direction
-        #errorTheta2AsDir = rawTheta - gtThetaM
-
-
+        # errorTheta2AsDir = rawTheta - gtThetaM
 
         # List appending
         rawMoveList.append(rawMove)
@@ -142,7 +142,7 @@ def main():
         errorTheta2List.append(errorTheta2)
 
         turningAngleList.append(rawTheta1)
-        #errorTheta2AsDirList.append(errorTheta2AsDir)
+        # errorTheta2AsDirList.append(errorTheta2AsDir)
 
         print(count)
         prevGtReading = gtReading
@@ -159,7 +159,8 @@ def main():
     plotMove(rawMinusGtMoveList, rawMoveList, gtMoveList)
     plotTheta(errorTheta1List, rawMoveList)
     plotTheta(errorTheta2List, rawMoveList)
-    #plotTheta(errorTheta2AsDirList, rawMoveList)
+    # plotTheta(errorTheta2AsDirList, rawMoveList)
+
 
 if __name__ == '__main__':
     main()

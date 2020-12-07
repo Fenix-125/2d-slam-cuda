@@ -3,12 +3,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
+
 def updateTrajectoryPlot(matchedReading, xTrajectory, yTrajectory, colors, count):
     x, y, theta, range = matchedReading['x'], matchedReading['y'], matchedReading['theta'], matchedReading['range']
     xTrajectory.append(x)
     yTrajectory.append(y)
     if count % 1 == 0:
         plt.scatter(x, y, color=next(colors), s=35)
+
 
 def main():
     jsonFile = "../DataSet/PreprocessedData/intel_gfs"
