@@ -152,7 +152,7 @@ class particle:
             plt.scatter(self.xTrajectory[i], self.yTrajectory[i], color=next(colors), s=35)
         plt.scatter(self.xTrajectory[-1], self.yTrajectory[-1], color=next(colors), s=500)
         plt.plot(self.xTrajectory, self.yTrajectory)
-        self.map.plotOccupancyGrid([-13, 20], [-25, 7], plotThreshold=False)
+        self.map.plot([-13, 20], [-25, 7], plotThreshold=False)
 
 
 def process_sensor_data(pf, sensorData, plotTrajectory=True):
@@ -175,7 +175,7 @@ def process_sensor_data(pf, sensorData, plotTrajectory=True):
                 plt.plot(particle.xTrajectory, particle.yTrajectory)
 
         xRange, yRange = [-13, 20], [-25, 7]
-        ogMap = bestParticle.map.occupancyGridVisited / bestParticle.map.occupancyGridTotal
+        ogMap = bestParticle.map.visited / bestParticle.map.total
         xIdx, yIdx = bestParticle.map.convertRealXYToMapIdx(xRange, yRange)
         ogMap = ogMap[yIdx[0]: yIdx[1], xIdx[0]: xIdx[1]]
         ogMap = np.flipud(1 - ogMap)
