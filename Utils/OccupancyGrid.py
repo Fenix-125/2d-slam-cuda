@@ -28,7 +28,6 @@ class OccupancyGrid:
         self.radByX = radByX
         self.radByY = radByY
         self.radByR = radByR
-        # theta= 0 is x direction. spokes=0 is y direc tion, spokesStartIdx is the first ray of lidar scan direction. spokes increase counter-clockwise
         self.spokesStartIdx = int(((self.numSpokes / 2 - self.numSamplesPerRev) / 2) % self.numSpokes)
 
     # INIT GRID
@@ -197,36 +196,3 @@ def updateTrajectoryPlot(matchedReading, xTrajectory, yTrajectory, colors, count
     yTrajectory.append(y)
     if count % 1 == 0:
         plt.scatter(x, y, color=next(colors), s=35)
-
-
-def main():
-    initMapXLength, initMapYLength, unitGridSize, lidarFOV, lidarMaxRange = 10, 10, 0.02, np.pi, 10  # in Meters
-    wallThickness = 7 * unitGridSize
-    jsonFile = "../DataSet/PreprocessedData/intel_gfs"
-    with open(jsonFile, 'r') as f:
-        input = json.load(f)
-        sensorData = input['map']
-    numSamplesPerRev = len(sensorData[list(sensorData)[0]]['range'])  # Get how many points per revolution
-    initXY = sensorData[sorted(sensorData.keys())[0]]
-    og = OccupancyGrid(initMapXLength, initMapYLength, initXY, unitGridSize, lidarFOV, numSamplesPerRev, lidarMaxRange,
-                       wallThickness)
-    count = 0
-    plt.figure(figsize=(19.20, 19.20))
-    xTrajectory, yTrajectory = [], []
-    colors = iter(cm.rainbow(np.linspace(1, 0, len(sensorData) + 1)))
-    for time in sorted(sensorData.keys()):
-        count += 1
-        og.updateOccupancyGrid(sensorData[time])
-        updateTrajectoryPlot(sensorData[time], xTrajectory, yTrajectory, colors, count)
-        # if count == 100:
-        #   break
-
-    plt.scatter(xTrajectory[0], yTrajectory[0], color='r', s=500)
-    plt.scatter(xTrajectory[-1], yTrajectory[-1], color=next(colors), s=500)
-    plt.plot(xTrajectory, yTrajectory)
-    # og.plotOccupancyGrid([-12, 20], [-23.5, 7])
-    # og.plotOccupancyGrid(xRange =[-11.9, 20], yRange =[-23.5, 6.    og.plotOccupancyGrid()
-
-
-if __name__ == '__main__':
-    main()

@@ -19,7 +19,7 @@ class ParticleFilter:
         self.particlesTrajectory = []
 
     def initParticles(self, ogParameters, smParameters):
-        for i in range(self.numParticles):
+        for _ in range(self.numParticles):
             p = Particle(ogParameters, smParameters)
             self.particles.append(p)
 
@@ -33,8 +33,8 @@ class ParticleFilter:
         variance = 0
         for i in range(self.numParticles):
             variance += (self.particles[i].weight - 1 / self.numParticles) ** 2
-            # variance += self.particles[i].weight**2
-        print(variance)
+
+        print(f"Variance {variance}")
         # if variance > ((self.numParticles - 1) / self.numParticles) ** 2 + (self.numParticles - 1.000000000000001) * (
         #         1 / self.numParticles) ** 2:
         # TODO: explain
@@ -51,9 +51,6 @@ class ParticleFilter:
             self.particles[i].weight /= weightSum
 
     def resample(self):
-        # for particle in self.particles:
-        #     particle.plotParticle()
-        #     print(particle.weight)
         weights = np.zeros(self.numParticles)
         tempParticles = []
         for i in range(self.numParticles):
@@ -90,7 +87,7 @@ class Particle:
         dx, dy = currentRawReading['x'] - self.prevRawReading['x'], currentRawReading['y'] - self.prevRawReading['y']
         estMovingDist = math.sqrt(dx ** 2 + dy ** 2)
         rawX, rawY, prevRawX, prevRawY = currentRawReading['x'], currentRawReading['y'], self.prevRawReading['x'], \
-                                         self.prevRawReading['y']
+            self.prevRawReading['y']
         rawXMove, rawYMove = rawX - prevRawX, rawY - prevRawY
         rawMove = math.sqrt((rawX - prevRawX) ** 2 + (rawY - prevRawY) ** 2)
         #  TODO: simplify END
@@ -116,7 +113,7 @@ class Particle:
         return estimatedReading, estMovingDist, estMovingTheta, rawMovingTheta
 
     def getMovingTheta(self, matchedReading):
-        x, y, theta, range = matchedReading['x'], matchedReading['y'], matchedReading['theta'], matchedReading['range']
+        x, y, theta, _ = matchedReading['x'], matchedReading['y'], matchedReading['theta'], matchedReading['range']
         prevX, prevY = self.xTrajectory[-1], self.yTrajectory[-1]
         xMove, yMove = x - prevX, y - prevY
         move = math.sqrt(xMove ** 2 + yMove ** 2)
@@ -191,8 +188,6 @@ def processSensorData(pf, sensorData, plotTrajectory=True):
         plt.savefig('Output/' + str(count).zfill(3) + '.png')
         plt.close()
 
-        # if count == 100:
-        #     break
     maxWeight = 0
     for particle in pf.particles:
         particle.plotParticle()
@@ -204,8 +199,8 @@ def processSensorData(pf, sensorData, plotTrajectory=True):
 
 def readJson(jsonFile):
     with open(jsonFile, 'r') as f:
-        input = json.load(f)
-        return input['map']
+        input_j = json.load(f)
+        return input_j['map']
 
 
 def main():

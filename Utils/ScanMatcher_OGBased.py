@@ -31,7 +31,7 @@ class ScanMatcher:
         self.og.checkAndExapndOG(xRangeList, yRangeList)
         xRangeListIdx, yRangeListIdx = self.og.convertRealXYToMapIdx(xRangeList, yRangeList)
         ogMap = self.og.occupancyGridVisited[yRangeListIdx[0]: yRangeListIdx[1], xRangeListIdx[0]: xRangeListIdx[1]] / \
-                self.og.occupancyGridTotal[yRangeListIdx[0]: yRangeListIdx[1], xRangeListIdx[0]: xRangeListIdx[1]]
+            self.og.occupancyGridTotal[yRangeListIdx[0]: yRangeListIdx[1], xRangeListIdx[0]: xRangeListIdx[1]]
         ogMap = ogMap > 0.5
         ogX = self.og.OccupancyGridX[yRangeListIdx[0]: yRangeListIdx[1], xRangeListIdx[0]: xRangeListIdx[1]]
         ogY = self.og.OccupancyGridY[yRangeListIdx[0]: yRangeListIdx[1], xRangeListIdx[0]: xRangeListIdx[1]]
@@ -72,11 +72,6 @@ class ScanMatcher:
                                                                                                estMovingTheta,
                                                                                                fineSearch=False,
                                                                                                matchMax=matchMax)
-        #########   For Debug Only  #############
-        # if count > 14:
-        #    self.plotMatchOverlay(probSP, matchedPx, matchedPy, matchedReading, xRangeList, yRangeList, coarseSearchStep)
-        #########################################
-        # Fine Search
         fineSearchStep = self.og.unitGridSize
         fineSigma = self.scanSigmaInNumGrid
         fineSearchHalfRad = self.searchHalfRad
@@ -96,11 +91,6 @@ class ScanMatcher:
                                                                                              estMovingTheta,
                                                                                              fineSearch=True,
                                                                                              matchMax=True)
-
-        #########   For Debug Only  #############
-        # if count > 0:
-        #   self.plotMatchOverlay(probSP, matchedPx, matchedPy, matchedReading, xRangeList, yRangeList, fineSearchStep)
-        #########################################
         return matchedReading, coarseConfidence
 
     def covertMeasureToXY(self, estimatedX, estimatedY, estimatedTheta, rMeasure):
@@ -146,9 +136,6 @@ class ScanMatcher:
                                                                         yRangeList[0], unitLength)
             uniqueRotatedPxPyIdx = np.unique(np.column_stack((rotatedPxIdx, rotatedPyIdx)), axis=0)
             rotatedPxIdx, rotatedPyIdx = uniqueRotatedPxPyIdx[:, 0], uniqueRotatedPxPyIdx[:, 1]
-            #########   For Debug Only  #############
-            # self.plotMatchOverlay(probSP, rotatedPx, rotatedPy, xRangeList, yRangeList, unitLength)
-            #########################################
             rotatedPxIdx = rotatedPxIdx.reshape(1, 1, -1)
             rotatedPyIdx = rotatedPyIdx.reshape(1, 1, -1)
             rotatedPxIdx = rotatedPxIdx + xv
@@ -172,10 +159,6 @@ class ScanMatcher:
                           "range": rMeasure}
         matchedPx, matchedPy = self.rotate((estimatedX, estimatedY), (px, py), dtheta)
 
-        #########   For Debug Only  #############
-        # self.plotMatchOverlay(probSP, matchedPx + dx, matchedPy + dy, matchedReading, xRangeList, yRangeList, unitLength)
-        #########################################
-
         return matchedPx + dx, matchedPy + dy, matchedReading, convTotal, confidence
 
     def plotMatchOverlay(self, probSP, matchedPx, matchedPy, matchedReading, xRangeList, yRangeList, unitLength):
@@ -188,7 +171,8 @@ class ScanMatcher:
         plt.scatter(poseXIdx, poseYIdx, color='blue', s=50)
         plt.show()
 
-    def rotate(self, origin, point, angle):
+    @staticmethod
+    def rotate(origin, point, angle):
         """
         Rotate a point counterclockwise by a given angle around a given origin.
         The angle should be given in radians.
@@ -199,9 +183,10 @@ class ScanMatcher:
         qy = oy + np.sin(angle) * (px - ox) + np.cos(angle) * (py - oy)
         return qx, qy
 
-    def convertXYToSearchSpaceIdx(self, px, py, beginX, beginY, unitLength):
-        xIdx = (((px - beginX) / unitLength)).astype(int)
-        yIdx = (((py - beginY) / unitLength)).astype(int)
+    @staticmethod
+    def convertXYToSearchSpaceIdx(px, py, beginX, beginY, unitLength):
+        xIdx = ((px - beginX) / unitLength).astype(int)
+        yIdx = ((py - beginY) / unitLength).astype(int)
         return xIdx, yIdx
 
 
@@ -213,12 +198,12 @@ def updateEstimatedPose(currentRawReading, prevMatchedReading, prevRawReading, p
     dx, dy = currentRawReading['x'] - prevRawReading['x'], currentRawReading['y'] - prevRawReading['y']
     estMovingDist = math.sqrt(dx ** 2 + dy ** 2)
     rawX, rawY, prevRawX, prevRawY = currentRawReading['x'], currentRawReading['y'], prevRawReading['x'], \
-                                     prevRawReading['y']
+        prevRawReading['y']
     rawXMove, rawYMove = rawX - prevRawX, rawY - prevRawY
     rawMove = math.sqrt((rawX - prevRawX) ** 2 + (rawY - prevRawY) ** 2)
 
     if rawMove > 0.3:
-        if prevRawMovingTheta != None:
+        if prevRawMovingTheta is not None:
             if rawYMove > 0:
                 rawMovingTheta = math.acos(rawXMove / rawMove)  # between -pi and +pi
             else:
@@ -239,13 +224,13 @@ def updateEstimatedPose(currentRawReading, prevMatchedReading, prevRawReading, p
 
 
 def updateTrajectory(matchedReading, xTrajectory, yTrajectory):
-    x, y, theta, range = matchedReading['x'], matchedReading['y'], matchedReading['theta'], matchedReading['range']
+    x, y, theta, _ = matchedReading['x'], matchedReading['y'], matchedReading['theta'], matchedReading['range']
     xTrajectory.append(x)
     yTrajectory.append(y)
 
 
 def getMovingTheta(matchedReading, xTrajectory, yTrajectory):
-    x, y, theta, range = matchedReading['x'], matchedReading['y'], matchedReading['theta'], matchedReading['range']
+    x, y, theta, _ = matchedReading['x'], matchedReading['y'], matchedReading['theta'], matchedReading['range']
     prevX, prevY = xTrajectory[-1], yTrajectory[-1]
     xMove, yMove = x - prevX, y - prevY
     move = math.sqrt(xMove ** 2 + yMove ** 2)
@@ -260,7 +245,6 @@ def getMovingTheta(matchedReading, xTrajectory, yTrajectory):
 
 
 def processSensorData(sensorData, og, sm):
-    # gtData = readJson("../DataSet/PreprocessedData/intel_corrected_log") #########   For Debug Only  #############
     count = 0
     plt.figure(figsize=(19.20, 19.20))
     colors = iter(cm.rainbow(np.linspace(1, 0, len(sensorData) + 1)))
@@ -269,10 +253,8 @@ def processSensorData(sensorData, og, sm):
         count += 1
         print(count)
         if count == 1:
-            # og.updateOccupancyGrid(sensorData[key])
             prevRawMovingTheta, prevMatchedMovingTheta = None, None
             matchedReading, confidence = sensorData[key], 1
-            # prevGtReading = gtData[key]  #########   For Debug Only  #############
         else:
             currentRawReading = sensorData[key]
             estimatedReading, estMovingDist, estMovingTheta, rawMovingTheta = updateEstimatedPose(currentRawReading,
@@ -283,16 +265,10 @@ def processSensorData(sensorData, og, sm):
             matchedReading, confidence = sm.matchScan(estimatedReading, estMovingDist, estMovingTheta, count)
             prevRawMovingTheta = rawMovingTheta
             prevMatchedMovingTheta = getMovingTheta(matchedReading, xTrajectory, yTrajectory)
-        #########   For Debug Only  #############
-        # gtReading = gtData[key]
-        # compareGT(currentRawReading, prevRawReading, matchedReading, prevMatchedReading, gtReading, prevGtReading)
-        # prevGtReading = gtReading
-        #########################################
+
         og.updateOccupancyGrid(matchedReading)
         updateTrajectory(matchedReading, xTrajectory, yTrajectory)
         prevMatchedReading, prevRawReading = matchedReading, sensorData[key]
-        # if count == 100:
-        #   break
 
     for i in range(len(xTrajectory)):
         plt.scatter(xTrajectory[i], yTrajectory[i], color=next(colors), s=35)
@@ -304,8 +280,8 @@ def processSensorData(sensorData, og, sm):
 
 def readJson(jsonFile):
     with open(jsonFile, 'r') as f:
-        input = json.load(f)
-        return input['map']
+        input_j = json.load(f)
+        return input_j['map']
 
 
 def compareGT(currentRawReading, prevRawReading, matchedReading, prevMatchedReading, gtReading, prevGtReading):
@@ -318,7 +294,7 @@ def compareGT(currentRawReading, prevRawReading, matchedReading, prevMatchedRead
     print("Estd last pos x: " + str(prevMatchedReading['x']) + ", y: " + str(prevMatchedReading['y']))
     print("Estd curr pos x: " + str(matchedReading['x']) + ", y: " + str(matchedReading['y']))
     rawEstMoveX, rawEstMoveY = currentRawReading['x'] - prevRawReading['x'], currentRawReading['y'] - \
-                               prevRawReading['y']
+        prevRawReading['y']
     print("raw move x: " + str(rawEstMoveX) + ", y: " + str(rawEstMoveY) + ", r: " + str(
         math.sqrt(rawEstMoveX ** 2 + rawEstMoveY ** 2)))
     currMatchMinusRawMoveX = matchedReading['x'] - prevMatchedReading['x'] - rawEstMoveX
@@ -326,23 +302,4 @@ def compareGT(currentRawReading, prevRawReading, matchedReading, prevMatchedRead
     print(
         "compensate move x: " + str(currMatchMinusRawMoveX) + ", y: " + str(currMatchMinusRawMoveY) + ", r: " + str(
             math.sqrt(currMatchMinusRawMoveX ** 2 + currMatchMinusRawMoveY ** 2)))
-    if math.sqrt(currMatchMinusRawMoveX ** 2 + currMatchMinusRawMoveY ** 2) > 1.5:
-        a = 1
 
-
-def main():
-    initMapXLength, initMapYLength, unitGridSize, lidarFOV, lidarMaxRange = 10, 10, 0.02, np.pi, 10  # in Meters
-    scanMatchSearchRadius, scanMatchSearchHalfRad, scanSigmaInNumGrid, wallThickness, moveRSigma, maxMoveDeviation, turnSigma, \
-    missMatchProbAtCoarse, coarseFactor = 1.4, 0.25, 2, 5 * unitGridSize, 0.1, 0.25, 0.3, 0.15, 5
-    sensorData = readJson("../DataSet/PreprocessedData/intel_gfs")
-    numSamplesPerRev = len(sensorData[list(sensorData)[0]]['range'])  # Get how many points per revolution
-    initXY = sensorData[sorted(sensorData.keys())[0]]
-    og = OccupancyGrid(initMapXLength, initMapYLength, initXY, unitGridSize, lidarFOV, numSamplesPerRev, lidarMaxRange,
-                       wallThickness)
-    sm = ScanMatcher(og, scanMatchSearchRadius, scanMatchSearchHalfRad, scanSigmaInNumGrid, moveRSigma,
-                     maxMoveDeviation, turnSigma, missMatchProbAtCoarse, coarseFactor)
-    processSensorData(sensorData, og, sm)
-
-
-if __name__ == '__main__':
-    main()
