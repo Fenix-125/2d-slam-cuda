@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
 
-class OccupancyGrid:
+class occupy_grid:
     def __init__(self, mapXLength, mapYLength, initXY, unitGridSize, lidarFOV, numSamplesPerRev, lidarMaxRange,
                  wallThickness):
         xNum = int(mapXLength / unitGridSize)

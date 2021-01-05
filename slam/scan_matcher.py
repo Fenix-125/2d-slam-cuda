@@ -2,12 +2,12 @@ import json
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
-from Utils.OccupancyGrid import OccupancyGrid
+from slam.occupy_grid import occupy_grid
 from scipy.ndimage import gaussian_filter
 import math
 
 
-class ScanMatcher:
+class scan_matcher:
     def __init__(self, og, searchRadius, searchHalfRad, scanSigmaInNumGrid, moveRSigma, maxMoveDeviation, turnSigma,
                  missMatchProbAtCoarse, coarseFactor):
         self.searchRadius = searchRadius
